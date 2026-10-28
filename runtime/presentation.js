@@ -28,6 +28,7 @@
   let current = -1;
   let step = 0;
   let size = null;
+  let isReady = false;
   let resolveReady;
 
   const api = window.presentation = {
@@ -162,7 +163,8 @@
     }
     emit(element, 'presentation:step', { index, step, steps: slide.steps, previous: previousStep });
     if (mode === 'browser') history.replaceState(null, '', '#' + encodeURIComponent(slides[index].id));
-    notify({ type: 'change', index, step });
+    // Die erste Anzeige beim Laden ist kein Folienwechsel – sonst springt die App nach dem Neuladen auf Folie 1.
+    if (isReady) notify({ type: 'change', index, step });
     return true;
   }
 
@@ -232,6 +234,7 @@
     const outline = api.slides;
     emit(document, 'presentation:ready', { slides: outline });
     notify({ type: 'ready', version: api.version, title: document.title, size, slides: outline, current, step });
+    isReady = true;
     resolveReady(api);
   }
 
