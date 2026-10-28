@@ -82,6 +82,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty else { return false }
         // Während die Deadline eingegeben wird, gehören Ziffern und ⏎ dem Eingabefeld.
         guard !controller.isEditingDeadline else { return false }
+        // Steht der Cursor in einem Eingabefeld einer Folie, tippt man dort – Esc gibt die Tastatur zurück.
+        guard !controller.isTypingInSlide else { return false }
         guard controller.source != nil, !controller.slides.isEmpty else { return false }
         let c = controller
         let shift = event.modifierFlags.contains(.shift)

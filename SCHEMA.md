@@ -79,6 +79,54 @@ Eine Ebene darf nicht übersprungen werden: Folgt auf eine Folie der Ebene 1 ein
 
 - **Mit** dieser Angabe gestaltet man jede Folie für eine feste Bühne (hier 1600×900 px). Die Laufzeit skaliert sie passend auf jeden Bildschirm, mit Rand in der Hintergrundfarbe (`--presentation-backdrop`, Standard Schwarz).
 - **Ohne** sie füllt jede Folie das ganze Fenster; um responsives Layout kümmert man sich dann selbst.
+- **Eigene Bühne:** Skaliert die Präsentation schon selbst einen Container (z. B. `#stage` mit `transform: scale(…)`) und liegen die Folien darin, lässt man die Angabe weg. Die Folien füllen dann diesen Container.
+
+## Schritte innerhalb einer Folie
+
+Elemente, die nacheinander erscheinen sollen, bekommen `data-step` mit ihrer Reihenfolge:
+
+```html
+<section data-slide>
+  <h2>Drei Gründe</h2>
+  <p data-step="1">Erstens …</p>
+  <p data-step="2">Zweitens …</p>
+  <p data-step="3">Drittens …</p>
+</section>
+```
+
+- **Weiter** blendet erst den nächsten Schritt ein und geht erst danach zur nächsten Folie. **Zurück** blendet wieder aus; wer auf die vorige Folie zurückblättert, sieht sie vollständig.
+- Mehrere Elemente mit derselben Zahl erscheinen gemeinsam.
+- Noch nicht eingeblendete Elemente sind unsichtbar (`opacity: 0`); sichtbare tragen `data-step-shown`. Eine Überblendung legt man selbst fest, z. B. `[data-step] { transition: opacity .4s; }`.
+- `data-steps="2"` an der Folie verlangt mindestens so viele Schritte, auch ohne sichtbare Elemente – etwa, wenn der erste Klick eine Musik starten soll (siehe Ereignis `presentation:step`).
+- ⇧→ / ⇧← überspringen die Schritte. Miniaturen in der App zeigen immer alle Schritte.
+
+## Aktionen, die überall gleichzeitig passieren
+
+In der App läuft dieselbe Präsentation in mehreren Fenstern (Beamer, Pult). Was eine Folie selbst tut – Timer starten, Musik abspielen, Werte in ein Feld tippen –, passiert zunächst nur in dem Fenster, in dem man klickt. Damit es überall geschieht, löst man es als **Aktion** aus:
+
+```js
+knopf.addEventListener('click', () => presentation.act('timer', 'start'));
+
+document.addEventListener('presentation:action', e => {
+  const { name, detail, remote } = e.detail;
+  if (name === 'timer' && detail === 'start') starteTimer();
+});
+```
+
+- `presentation.act(name, detail)` löst das Ereignis `presentation:action` sofort hier aus – und über die App auch in allen anderen Fenstern. Im Browser passiert es nur hier.
+- `detail` muss sich als JSON übertragen lassen (Text, Zahl, Liste, einfaches Objekt).
+- `remote` ist `true`, wenn die Aktion aus einem anderen Fenster kommt – praktisch, um z. B. einen getippten Wert nur dort einzusetzen.
+
+## Ton
+
+Ton soll nur dort erklingen, wo das Publikum zuhört. `presentation.audible` ist `true` im Browser und auf dem Beamer, im Pult und bei Miniaturen `false`.
+
+- `<audio>`- und `<video>`-Elemente schaltet die App im Pult selbst stumm.
+- Ton, den ein Skript erzeugt (Web Audio), muss `presentation.audible` selbst prüfen.
+
+## Eingabefelder
+
+Steht der Cursor in einem Eingabefeld einer Folie, überlässt die App ihm die Tastatur – Ziffern und Pfeile blättern dann nicht. Esc (oder ein Klick daneben) gibt die Tastatur zurück; dazu genügt im eigenen Skript `input.blur()` bei Esc.
 
 ## Was die Laufzeit an die Folien schreibt
 
@@ -116,6 +164,8 @@ Im Modus `snapshot` sind alle Übergänge und Animationen abgeschaltet, damit Mi
 | `presentation:change` | `document` | `{ index, previous, slide }` |
 | `presentation:enter` | die Folie, die erscheint (bubbelt) | `{ index, slide }` |
 | `presentation:leave` | die Folie, die verschwindet (bubbelt) | `{ index, slide }` |
+| `presentation:step` | die aktuelle Folie (bubbelt), bei jedem Betreten und jedem Schritt | `{ index, step, steps, previous }` – `previous` ist der Schritt davor auf derselben Folie, beim Betreten `null` |
+| `presentation:action` | `document` | `{ name, detail, remote }` |
 
 ```js
 document.querySelector('#zeitleiste').addEventListener('presentation:enter', () => starteAnimation());
@@ -133,9 +183,9 @@ Solche Sprünge kommen auch im Pult und auf dem Beamer an.
 
 | Taste | Wirkung |
 |---|---|
-| → Leertaste Bild↓ | nächste Folie (inkl. Unterfolien: 2 → 2.1 → 2.2 → 3) |
-| ← Bild↑ | vorige Folie |
-| ⇧→ | nächste Rückgrat-Folie, Unterfolien überspringen (2.1 → 3) |
+| → Leertaste Bild↓ | nächster Schritt, sonst nächste Folie (inkl. Unterfolien: 2 → 2.1 → 2.2 → 3) |
+| ← Bild↑ | voriger Schritt, sonst vorige Folie |
+| ⇧→ | nächste Rückgrat-Folie, Unterfolien und Schritte überspringen (2.1 → 3) |
 | ⇧← | zur eigenen Rückgrat-Folie (2.2 → 2), von dort zur vorigen (2 → 1) |
 | Pos1 / Ende | erste / letzte Folie |
 | F | Vollbild |
@@ -149,11 +199,14 @@ Hat ein eigenes Skript die Taste schon behandelt (`event.preventDefault()`) oder
 | `version` | Schema-Version, `1` |
 | `mode` | wie `data-presentation-mode` |
 | `size` | `{ width, height }` oder `null` |
-| `slides` | Liste mit `{ index, number, level, id, title, notes, parent, children }`; `notes` ist HTML, `parent` und `children` sind Indizes |
+| `slides` | Liste mit `{ index, number, level, id, title, notes, steps, parent, children }`; `notes` ist HTML, `steps` die Zahl der Schritte, `parent` und `children` sind Indizes |
 | `current` | Index der aktuellen Folie (ab 0) |
-| `goto(ref)` | `ref` = Index (Zahl), Nummer (`"2.1"`) oder `id`; liefert `true`/`false` |
-| `next()`, `prev()` | linear blättern |
+| `step` | eingeblendete Schritte der aktuellen Folie (0 = keiner) |
+| `goto(ref, step)` | `ref` = Index (Zahl), Nummer (`"2.1"`) oder `id`; `step` optional (Standard 0, `Infinity` = alle); liefert `true`/`false` |
+| `next()`, `prev()` | linear blättern, Schritte eingeschlossen |
 | `nextSection()`, `prevSection()` | im Rückgrat blättern |
+| `act(name, detail)` | Aktion auslösen, die in allen Fenstern abläuft |
+| `audible` | `true`, wo das Publikum zuhört (Browser, Beamer) |
 | `ready` | Promise, erfüllt, sobald die Folien eingelesen sind |
 
 **Eigene Laufzeit:** Wer Navigation komplett selbst bauen will, darf das. Definiert die Seite selbst ein `window.presentation` mit dieser Schnittstelle (und meldet Folienwechsel an die App, siehe Quelltext von `presentation.js`), nutzt die App diese statt der mitgelieferten.
@@ -162,6 +215,9 @@ Hat ein eigenes Skript die Taste schon behandelt (`event.preventDefault()`) oder
 
 - Jede Folie ist ein Element mit `data-slide`; Unterfolien bekommen `data-level="2"` (oder tiefer).
 - Notizen als `<aside data-notes>` in die jeweilige Folie.
+- Schrittweise Einblendungen mit `data-step="1"`, `"2"` … statt eigener Klick-Logik.
+- Was eine Folie selbst tut (Timer, Musik, Eingaben), über `presentation.act()` auslösen; Ton nur bei `presentation.audible`.
+- Nicht selbst blättern (keine eigenen Pfeiltasten-Handler) – das macht die Laufzeit. Eigene Skripte, die `window.presentation` schon beim Laden brauchen, stehen hinter dem `<script src="presentation.js">`.
 - `<meta name="presentation" content="width=…, height=…">`, wenn mit fester Bühne gestaltet wird.
 - `<script src="presentation.js"></script>` einbinden, damit die Datei auch direkt im Browser läuft (Pfad anpassen oder Inhalt einbetten).
 - Innerhalb der Folien: freie Hand. Keine Folie muss etwas über die anderen wissen.

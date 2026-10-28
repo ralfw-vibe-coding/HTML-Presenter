@@ -11,6 +11,9 @@ final class PresentationController {
     private(set) var documentTitle = ""
     private(set) var slides: [Slide] = []
     private(set) var current = 0
+    private(set) var currentStep = 0
+    /// Steht der Cursor in einem Eingabefeld einer Folie? Dann gehören die Tasten der Folie.
+    private(set) var isTypingInSlide = false
     private(set) var thumbnails: [Int: NSImage] = [:]
     private(set) var stageSize = CGSize(width: 1600, height: 900)
     private(set) var problem: String?
@@ -78,6 +81,8 @@ final class PresentationController {
     func open(_ url: URL) {
         source = url
         current = 0
+        currentStep = 0
+        isTypingInSlide = false
         slides = []
         thumbnails = [:]
         notesCache = [:]
@@ -133,22 +138,38 @@ final class PresentationController {
             }
             problem = list.isEmpty ? "Keine Folien gefunden. Folien brauchen das Attribut data-slide (siehe SCHEMA.md)." : nil
             current = min(current, max(0, list.count - 1))
+            currentStep = min(currentStep, list.indices.contains(current) ? list[current].steps : 0)
             switch mode {
             case .beamer:
                 documentTitle = body["title"] as? String ?? beamerWeb.title ?? ""
                 onTitleChange?(documentTitle)
-                push(current, to: beamerWeb)
+                push(to: beamerWeb)
             case .presenter:
-                push(current, to: liveWeb)
+                push(to: liveWeb)
             case .snapshot:
                 makeThumbnails()
             }
         case "change":
             // Die Miniaturen-WebView blättert nur für Fotos, das ist kein Folienwechsel.
             guard mode != .snapshot, let index = body["index"] as? Int else { return }
-            goto(index)
+            goto(index, step: body["step"] as? Int ?? 0)
+        case "action":
+            guard mode != .snapshot, let name = body["name"] as? String else { return }
+            relayAction(name, detail: body["detail"] ?? NSNull(), from: mode)
+        case "typing":
+            guard mode != .snapshot else { return }
+            isTypingInSlide = body["active"] as? Bool ?? false
         default:
             break
+        }
+    }
+
+    /// Eine Aktion aus einem Fenster (z. B. „Timer starten“) läuft auch im jeweils anderen ab.
+    private func relayAction(_ name: String, detail: Any, from mode: WebMode) {
+        let targets = mode == .beamer ? [liveWeb] : [beamerWeb]
+        for web in targets {
+            web.callAsyncJavaScript("window.presentation && presentation.receiveAction(name, detail); return true;",
+                                    arguments: ["name": name, "detail": detail], in: nil, in: .page, completionHandler: nil)
         }
     }
 
@@ -162,16 +183,24 @@ final class PresentationController {
     var currentSlide: Slide? { slides.indices.contains(current) ? slides[current] : nil }
     var nextSlide: Slide? { slides.indices.contains(current + 1) ? slides[current + 1] : nil }
 
-    func goto(_ index: Int) {
+    /// Zeigt Folie `index` mit `step` Einblendungen (Int.max = alle) auf Beamer und Pult.
+    func goto(_ index: Int, step: Int = 0) {
         guard slides.indices.contains(index) else { return }
         current = index
+        currentStep = min(max(0, step), slides[index].steps)
         typed = ""
-        push(index, to: beamerWeb)
-        push(index, to: liveWeb)
+        push(to: beamerWeb)
+        push(to: liveWeb)
     }
 
-    func next() { goto(current + 1) }
-    func prev() { goto(current - 1) }
+    /// Erst die Einblendungen der Folie, dann die nächste Folie.
+    func next() {
+        if let slide = currentSlide, currentStep < slide.steps { goto(current, step: currentStep + 1) } else { goto(current + 1) }
+    }
+
+    func prev() {
+        if currentStep > 0 { goto(current, step: currentStep - 1) } else { goto(current - 1, step: .max) }
+    }
     func first() { goto(0) }
     func last() { goto(slides.count - 1) }
 
@@ -200,8 +229,8 @@ final class PresentationController {
         }
     }
 
-    private func push(_ index: Int, to web: WKWebView) {
-        web.evaluateJavaScript("window.presentation && presentation.goto(\(index))", completionHandler: nil)
+    private func push(to web: WKWebView) {
+        web.evaluateJavaScript("window.presentation && presentation.goto(\(current), \(currentStep))", completionHandler: nil)
     }
 
     // MARK: Übersicht

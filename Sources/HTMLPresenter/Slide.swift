@@ -8,6 +8,8 @@ struct Slide: Identifiable, Equatable {
     let key: String
     let title: String
     let notes: String
+    /// Anzahl der Einblendungen innerhalb der Folie (`data-step`), 0 = keine.
+    let steps: Int
     let parent: Int?
     let children: [Int]
 
@@ -21,6 +23,7 @@ struct Slide: Identifiable, Equatable {
         key = dict["id"] as? String ?? number
         title = dict["title"] as? String ?? ""
         notes = dict["notes"] as? String ?? ""
+        steps = dict["steps"] as? Int ?? 0
         parent = dict["parent"] as? Int
         children = dict["children"] as? [Int] ?? []
     }

@@ -101,6 +101,12 @@ private struct TopBar: View {
                         .font(.system(size: 14, weight: .medium))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
+                    if slide.steps > 0 {
+                        Text("Schritt \(controller.currentStep) / \(slide.steps)")
+                            .font(.system(size: 14, weight: .medium))
+                            .monospacedDigit()
+                            .foregroundStyle(controller.currentStep < slide.steps ? Color.consoleSelection : Color.secondary)
+                    }
                 }
             }
 
@@ -332,6 +338,12 @@ private struct SpeakerView: View {
                 .frame(width: column)
 
                 VStack(alignment: .leading, spacing: 10) {
+                    if let slide = controller.currentSlide, controller.currentStep < slide.steps {
+                        let left = slide.steps - controller.currentStep
+                        Text(left == 1 ? "Noch 1 Einblendung auf dieser Folie" : "Noch \(left) Einblendungen auf dieser Folie")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.consoleSelection)
+                    }
                     if let next = controller.nextSlide {
                         SectionLabel("Als Nächstes · \(next.number)")
                         Thumbnail(image: controller.thumbnails[next.index], aspect: controller.stageSize)
