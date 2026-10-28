@@ -12,6 +12,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/HTMLPresenter"
 cp App/Info.plist "$APP/Contents/Info.plist"
 cp runtime/presentation.js "$APP/Contents/Resources/presentation.js"
+cp SCHEMA.md "$APP/Contents/Resources/SCHEMA.md"
 # Das Symbol wird mit App/make-icon.swift gezeichnet; neu erzeugen nur, wenn es fehlt.
 [[ -f App/AppIcon.icns ]] || {
     swift App/make-icon.swift App/AppIcon-1024.png

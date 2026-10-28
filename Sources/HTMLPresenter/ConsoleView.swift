@@ -33,6 +33,17 @@ struct ConsoleView: View {
                 JumpOverlay(typed: controller.typed)
             }
         }
+        .overlay(alignment: .bottom) {
+            if let toast = controller.toast {
+                Label(toast, systemImage: "checkmark.circle.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .padding(.horizontal, 18).padding(.vertical, 10)
+                    .background(.ultraThickMaterial, in: Capsule())
+                    .padding(.bottom, 28)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.2), value: controller.toast)
         .overlay(alignment: .top) {
             if let warning = controller.warning, !isPresentingMirror {
                 WarningBanner(warning: warning) { controller.dismissWarning() }
@@ -58,7 +69,7 @@ struct ConsoleView: View {
     @ViewBuilder
     private var content: some View {
         if controller.source == nil {
-            EmptyState(onOpen: onOpen)
+            EmptyState(onOpen: onOpen, onCopySchema: controller.copySchemaToPasteboard)
         } else if let problem = controller.problem {
             Text(problem)
                 .font(.title3)
@@ -600,6 +611,7 @@ private struct Thumbnail: View {
 
 private struct EmptyState: View {
     let onOpen: () -> Void
+    let onCopySchema: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -611,6 +623,12 @@ private struct EmptyState: View {
             Button("Präsentation öffnen …", action: onOpen)
                 .keyboardShortcut("o")
                 .controlSize(.large)
+            Button(action: onCopySchema) {
+                Label("Präsentationsschema für KI kopieren", systemImage: "doc.on.clipboard")
+            }
+            .buttonStyle(.link)
+            .padding(.top, 8)
+            .help("Legt SCHEMA.md in die Zwischenablage – zum Einfügen in einen Chat mit einer KI")
         }
     }
 }

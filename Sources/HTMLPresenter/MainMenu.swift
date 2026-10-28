@@ -58,6 +58,8 @@ enum MainMenu {
         NSApp.windowsMenu = windowMenu
 
         bar.addSubmenu("Hilfe") {
+            $0.item("Präsentationsschema kopieren (für KI)", #selector(AppDelegate.copySchema(_:)))
+            $0.addItem(.separator())
             $0.item("Tastenkürzel", #selector(AppDelegate.showShortcuts(_:)), "?")
         }
         return bar

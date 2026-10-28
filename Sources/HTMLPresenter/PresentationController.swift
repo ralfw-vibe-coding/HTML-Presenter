@@ -115,12 +115,43 @@ final class PresentationController {
     }
 
     private static func loadRuntime() -> String? {
-        let bundled = Bundle.main.url(forResource: "presentation", withExtension: "js")
-        // Beim Start per `swift run` liegt die Laufzeit noch im Projektordner.
+        resourceText("presentation.js", projectPath: "runtime/presentation.js")
+    }
+
+    /// Text einer Datei aus dem App-Bündel – oder, beim Start per `swift run`, aus dem Projektordner.
+    static func resourceText(_ name: String, projectPath: String) -> String? {
+        let url = URL(fileURLWithPath: name)
+        let bundled = Bundle.main.url(forResource: url.deletingPathExtension().lastPathComponent, withExtension: url.pathExtension)
         let project = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("runtime/presentation.js")
+            .appendingPathComponent(projectPath)
         return [bundled, project].compactMap { $0 }.lazy.compactMap { try? String(contentsOf: $0, encoding: .utf8) }.first
+    }
+
+    // MARK: Hinweise im Pult
+
+    /// Kurze Bestätigung, die nach ein paar Sekunden von selbst verschwindet.
+    private(set) var toast: String?
+
+    func showToast(_ text: String) {
+        toast = text
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+            MainActor.assumeIsolated {
+                if self?.toast == text { self?.toast = nil }
+            }
+        }
+    }
+
+    /// Legt SCHEMA.md in die Zwischenablage, z. B. um sie einer KI vorzulegen.
+    func copySchemaToPasteboard() {
+        guard let schema = Self.resourceText("SCHEMA.md", projectPath: "SCHEMA.md") else {
+            NSSound.beep()
+            showToast("Schema nicht gefunden")
+            return
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(schema, forType: .string)
+        showToast("Präsentationsschema in der Zwischenablage")
     }
 
     // MARK: Nachrichten der Laufzeit

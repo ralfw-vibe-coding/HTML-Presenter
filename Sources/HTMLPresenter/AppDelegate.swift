@@ -195,6 +195,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     @objc func toggleTimer(_ sender: Any?) { controller.toggleTimer() }
 
+    @objc func copySchema(_ sender: Any?) { controller.copySchemaToPasteboard() }
+
     @objc func showShortcuts(_ sender: Any?) {
         let alert = NSAlert()
         alert.messageText = "Tastenkürzel"

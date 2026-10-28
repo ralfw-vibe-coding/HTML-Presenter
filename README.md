@@ -2,7 +2,7 @@
 
 Mac-App, die HTML-Präsentationen wie Keynote oder PowerPoint vorführt: Auf dem Beamer läuft die Präsentation im Vollbild, auf dem Mac ein Pult mit Referentenansicht, Übersicht und Spiegel – alles synchron.
 
-Wie eine Präsentation aufgebaut sein muss, steht in [SCHEMA.md](SCHEMA.md). Ein vollständiges Beispiel mit Unterfolien und Notizen: [beispiele/hieroglyphen.html](beispiele/hieroglyphen.html).
+Wie eine Präsentation aufgebaut sein muss, steht in [SCHEMA.md](SCHEMA.md). Die App legt das Schema auf Wunsch in die Zwischenablage (Hilfe → Präsentationsschema kopieren), damit man es schnell einer KI vorlegen kann, die eine Präsentation erzeugen soll. Ein vollständiges Beispiel mit Unterfolien und Notizen: [beispiele/hieroglyphen.html](beispiele/hieroglyphen.html).
 
 ## Bauen und starten
 
