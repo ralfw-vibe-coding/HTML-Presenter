@@ -1,0 +1,9 @@
+# Swift-Build und fertiges App-Bündel (entstehen mit ./build.sh)
+.build/
+build/
+.swiftpm/
+
+# Präsentationen zum Ausprobieren gehören nicht ins Repo
+beispiele/
+
+.DS_Store
