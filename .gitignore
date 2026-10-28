@@ -3,7 +3,8 @@
 build/
 .swiftpm/
 
-# Präsentationen zum Ausprobieren gehören nicht ins Repo
-beispiele/
+# Präsentationen zum Ausprobieren gehören nicht ins Repo – bis auf das Beispiel aus der README
+beispiele/*
+!beispiele/hieroglyphen.html
 
 .DS_Store

@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="presentation" content="width=1600, height=900">
+<title>Die Entzifferung der Hieroglyphen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Source+Sans+3:wght@400;600;700&family=Noto+Sans+Egyptian+Hieroglyphs&display=swap" rel="stylesheet">
+<script src="../runtime/presentation.js"></script>
+<style>
+:root {
+  --papyrus: #f2e8d0;
+  --papyrus-deep: #e6d5ae;
+  --ink: #2a1f16;
+  --muted: #76644c;
+  --ochre: #b5762a;
+  --lapis: #1d3768;
+  --lapis-deep: #13254a;
+  --terra: #a3452b;
+  --stone: #3b3a3d;
+  --presentation-backdrop: #15100b;
+  --serif: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
+  --glyph: 'Noto Sans Egyptian Hieroglyphs', 'Segoe UI Historic', sans-serif;
+}
+
+/* ---------- Folien-Grundgerüst ---------- */
+[data-slide] {
+  display: flex;
+  flex-direction: column;
+  padding: 84px 112px 96px;
+  color: var(--ink);
+  font: 400 28px/1.45 var(--sans);
+  background:
+    radial-gradient(1200px 700px at 15% 10%, rgba(255,255,255,.45), transparent 60%),
+    radial-gradient(900px 600px at 90% 100%, rgba(181,118,42,.16), transparent 60%),
+    var(--papyrus);
+  transition: opacity .45s ease, visibility .45s;
+}
+[data-slide]:not([data-state="current"]) { opacity: 0; }
+[data-slide]::after {
+  content: attr(data-slide-number);
+  position: absolute; right: 56px; bottom: 38px;
+  font: 600 20px/1 var(--sans); letter-spacing: .08em; color: var(--muted);
+}
+[data-slide]::before {
+  content: 'Die Entzifferung der Hieroglyphen';
+  position: absolute; left: 112px; bottom: 38px;
+  font: 600 16px/1 var(--sans); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); opacity: .7;
+}
+.title-slide::before { content: none; }
+
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.05; margin: 0; }
+h1 { font-size: 112px; letter-spacing: -.01em; }
+h2 { font-size: 68px; margin-bottom: 36px; }
+h3 { font-size: 40px; margin-bottom: 14px; }
+p { margin: 0 0 22px; }
+em { font-style: normal; color: var(--terra); font-weight: 600; }
+.kicker {
+  font: 700 19px/1 var(--sans); letter-spacing: .2em; text-transform: uppercase;
+  color: var(--ochre); margin-bottom: 22px;
+}
+.split { display: grid; grid-template-columns: 1.08fr .92fr; gap: 72px; align-items: center; flex: 1; }
+.facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 22px; }
+.facts li { padding-left: 34px; position: relative; }
+.facts li::before { content: ''; position: absolute; left: 0; top: .55em; width: 14px; height: 14px; border-radius: 50%; background: var(--ochre); }
+.facts b { color: var(--lapis); }
+.glyph { font-family: var(--glyph); font-weight: 400; line-height: 1; }
+
+/* ---------- Kartusche ---------- */
+.cartouche {
+  display: inline-flex; align-items: center; gap: 14px;
+  padding: 22px 46px 22px 40px; margin-right: 22px;
+  border: 6px solid currentColor; border-radius: 999px; position: relative;
+}
+.cartouche::after {
+  content: ''; position: absolute; right: -22px; top: 12%; height: 76%; width: 6px;
+  background: currentColor; border-radius: 3px;
+}
+
+/* ---------- Kapitelfolien ---------- */
+.chapter {
+  color: var(--papyrus);
+  background:
+    radial-gradient(1000px 700px at 80% 20%, rgba(255,255,255,.08), transparent 60%),
+    linear-gradient(135deg, var(--lapis), var(--lapis-deep));
+  justify-content: center;
+}
+.chapter::before, .chapter::after { color: rgba(242,232,208,.6); }
+.chapter .kicker { color: #e3b56b; }
+.chapter h2 { font-size: 120px; margin-bottom: 30px; }
+.chapter p { font-size: 34px; max-width: 1000px; color: rgba(242,232,208,.85); }
+.chapter .big-glyph {
+  position: absolute; right: 110px; top: 50%; transform: translateY(-50%);
+  font-size: 380px; color: rgba(242,232,208,.12);
+}
+
+/* ---------- 1 Titel ---------- */
+.title-slide { justify-content: center; }
+.title-slide h1 { max-width: 1150px; margin-bottom: 34px; }
+.title-slide .lead { font-size: 34px; color: var(--muted); max-width: 980px; }
+.title-slide .name-row { display: flex; align-items: center; gap: 40px; margin-top: 64px; }
+.title-slide .cartouche { font-size: 58px; color: var(--ochre); }
+.title-slide .cartouche-label { font: 600 18px var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+
+/* ---------- 2 Zeitleiste ---------- */
+.timeline { list-style: none; margin: 30px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; position: relative; }
+.timeline::before { content: ''; position: absolute; left: 0; right: 0; top: 30px; height: 4px; background: var(--papyrus-deep); border-radius: 2px; }
+.timeline li { position: relative; padding-top: 70px; opacity: 0; }
+.timeline li::before { content: ''; position: absolute; top: 18px; left: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--papyrus); border: 5px solid var(--ochre); box-sizing: border-box; }
+.timeline li.dark::before { background: var(--ink); border-color: var(--ink); }
+.timeline .year { display: block; font: 600 50px/1 var(--serif); color: var(--lapis); margin-bottom: 10px; }
+.timeline .what { font-size: 25px; line-height: 1.35; }
+.play .timeline li { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i) * .35s + .2s); }
+@keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+.silence { margin-top: 56px; font: 500 italic 38px/1.3 var(--serif); color: var(--muted); max-width: 1200px; }
+
+/* ---------- 2.1 Horapollon ---------- */
+.sign-card { background: rgba(255,255,255,.55); border: 1px solid rgba(118,100,76,.25); border-radius: 28px; padding: 44px; text-align: center; box-shadow: 0 20px 50px -30px rgba(42,31,22,.5); }
+.sign-card .glyph { font-size: 200px; color: var(--ink); display: block; margin: 6px 0 20px; }
+.sign-card .reading { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; text-align: left; font-size: 23px; line-height: 1.35; }
+.sign-card .reading div { background: var(--papyrus); border-radius: 16px; padding: 18px 20px; }
+.sign-card .reading b { display: block; font-size: 16px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 6px; color: var(--ochre); }
+.sign-card .reading .right b { color: var(--lapis); }
+
+/* ---------- 2.2 Kircher ---------- */
+.versus { display: grid; gap: 22px; }
+.versus div { border-radius: 22px; padding: 30px 34px; }
+.versus .wrong { background: rgba(163,69,43,.1); border-left: 8px solid var(--terra); font: 500 italic 31px/1.35 var(--serif); }
+.versus .true { background: rgba(29,55,104,.08); border-left: 8px solid var(--lapis); }
+.versus b { display: block; font: 700 16px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; margin-bottom: 12px; font-style: normal; }
+.versus .wrong b { color: var(--terra); }
+.versus .true b { color: var(--lapis); }
+
+/* ---------- 3.1 Fund ---------- */
+.stats { display: grid; gap: 22px; }
+.stat { background: rgba(255,255,255,.55); border-radius: 22px; padding: 26px 32px; border: 1px solid rgba(118,100,76,.2); }
+.stat strong { display: block; font: 600 64px/1 var(--serif); color: var(--lapis); }
+.stat span { font-size: 22px; color: var(--muted); }
+
+/* ---------- 3.2 Drei Schriften ---------- */
+.stone-layout { display: grid; grid-template-columns: 480px 1fr; gap: 80px; flex: 1; align-items: center; min-height: 0; }
+.stone {
+  height: 490px; display: grid; grid-template-rows: 24fr 32fr 44fr; gap: 6px; padding: 46px 32px 28px;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0 / 23px 19px,
+    radial-gradient(circle at 70% 60%, rgba(0,0,0,.25) 0 2px, transparent 3px) 0 0 / 17px 29px,
+    linear-gradient(160deg, #4a494d, var(--stone) 55%, #2a292c);
+  clip-path: polygon(9% 6%, 30% 0, 46% 7%, 63% 2%, 86% 9%, 100% 4%, 98% 100%, 0 100%, 3% 30%);
+  filter: drop-shadow(0 30px 40px rgba(0,0,0,.4));
+}
+.band {
+  all: unset; cursor: pointer; overflow: hidden; border-radius: 6px; padding: 10px 14px;
+  color: rgba(235,230,220,.62); outline: 3px solid transparent; transition: outline-color .2s, background .2s, opacity .2s;
+}
+.band:hover { background: rgba(255,255,255,.06); }
+.stone.has-choice .band { opacity: .45; }
+.stone.has-choice .band.chosen { opacity: 1; outline-color: #e3b56b; background: rgba(227,181,107,.12); }
+.band.hiero { font: 30px/1.35 var(--glyph); word-break: break-all; }
+.band.demotic {
+  background-image: repeating-linear-gradient(transparent 0 15px, rgba(235,230,220,.0) 15px 16px),
+    repeating-linear-gradient(90deg, rgba(235,230,220,.5) 0 9px, transparent 9px 13px, rgba(235,230,220,.5) 13px 15px, transparent 15px 24px, rgba(235,230,220,.5) 24px 40px, transparent 40px 46px);
+  -webkit-mask: repeating-linear-gradient(transparent 0 6px, #000 6px 11px, transparent 11px 19px);
+          mask: repeating-linear-gradient(transparent 0 6px, #000 6px 11px, transparent 11px 19px);
+}
+.stone.has-choice .band.demotic.chosen { outline: none; filter: drop-shadow(0 0 0 #e3b56b); }
+.band.greek { font: 600 15px/1.45 'Times New Roman', serif; letter-spacing: .12em; word-break: break-all; }
+.script-info { min-height: 420px; }
+.script-info .hint { color: var(--muted); font-style: italic; font-family: var(--serif); font-size: 36px; }
+.script-info .lines { display: inline-block; margin-top: 10px; font: 600 54px/1 var(--serif); color: var(--lapis); }
+.script-info .lines small { font: 600 22px var(--sans); color: var(--muted); margin-left: 10px; }
+.script-tabs { display: flex; gap: 12px; margin-bottom: 34px; }
+.script-tabs button {
+  font: 600 20px var(--sans); padding: 12px 22px; border-radius: 999px; border: 2px solid var(--lapis);
+  background: transparent; color: var(--lapis); cursor: pointer;
+}
+.script-tabs button.chosen { background: var(--lapis); color: var(--papyrus); }
+
+/* ---------- 4 Wettrennen ---------- */
+.rivals { display: flex; gap: 70px; margin-top: 30px; }
+.rival { display: flex; align-items: center; gap: 26px; }
+.rival .initials { width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; font: 600 52px var(--serif); background: rgba(242,232,208,.12); border: 3px solid rgba(242,232,208,.45); }
+.rival b { display: block; font: 600 40px/1.1 var(--serif); }
+.rival span { font-size: 22px; color: rgba(242,232,208,.7); }
+
+/* ---------- 4.1 Young ---------- */
+.annotated { display: inline-flex; gap: 6px; }
+.annotated figure { margin: 0; text-align: center; }
+.annotated .glyph { font-size: 86px; display: block; }
+.annotated figcaption { font: 600 26px var(--sans); color: var(--terra); margin-top: 12px; }
+.annotated figure.unsure figcaption { color: var(--muted); }
+.young-visual { text-align: center; }
+.young-visual .cartouche { color: var(--ink); padding: 26px 44px 18px 38px; }
+.young-visual p { font-size: 22px; color: var(--muted); margin-top: 26px; }
+
+/* ---------- 4.2 Champollion ---------- */
+.quote { font: 600 italic 92px/1 var(--serif); color: var(--terra); margin: 6px 0 40px; }
+
+/* ---------- 4.2.1 Ramses ---------- */
+.ramses { display: flex; flex-direction: column; align-items: center; gap: 46px; flex: 1; justify-content: center; }
+.ramses .cartouche { gap: 26px; padding: 26px 64px 26px 56px; color: var(--ink); }
+.sign {
+  all: unset; cursor: pointer; display: grid; justify-items: center; gap: 14px; padding: 14px 12px;
+  border-radius: 18px; transition: background .2s;
+}
+.sign:hover { background: rgba(181,118,42,.12); }
+.sign.active { background: rgba(181,118,42,.2); }
+.sign .glyph { font-size: 110px; }
+.sign .sound { font: 700 30px/1 var(--sans); color: var(--muted); letter-spacing: .06em; min-width: 70px; text-align: center; }
+.sign.revealed .sound { color: var(--terra); }
+.explain { width: 1060px; min-height: 150px; text-align: center; font-size: 28px; }
+.explain .hint { color: var(--muted); font: 500 italic 34px var(--serif); }
+.explain h3 { font-size: 36px; }
+.reading-result { font: 600 44px var(--serif); color: var(--lapis); opacity: 0; transition: opacity .5s; }
+.reading-result.shown { opacity: 1; }
+
+/* ---------- 5 Ergebnis ---------- */
+.results { display: grid; grid-template-columns: 1.15fr 1fr; gap: 70px; flex: 1; align-items: start; }
+.chronik { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; font-size: 26px; }
+.chronik li { display: grid; grid-template-columns: 110px 1fr; gap: 20px; }
+.chronik b { font: 600 36px/1 var(--serif); color: var(--lapis); padding-top: 2px; }
+.keys { display: grid; gap: 18px; }
+.key { display: grid; grid-template-columns: 64px 1fr; gap: 20px; align-items: center; background: rgba(255,255,255,.55); border-radius: 20px; padding: 20px 24px; border: 1px solid rgba(118,100,76,.2); font-size: 24px; line-height: 1.3; }
+.key .num { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: var(--ochre); color: #fff; font: 700 30px var(--serif); }
+.key b { display: block; font-size: 26px; color: var(--ink); }
+
+/* ---------- Bedienleiste nur im Browser ---------- */
+.browser-nav {
+  position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 10;
+  display: none; align-items: center; gap: 6px; padding: 6px; border-radius: 999px;
+  background: rgba(21,16,11,.72); color: #f2e8d0; font: 600 14px var(--sans);
+  opacity: .25; transition: opacity .2s;
+}
+.browser-nav:hover { opacity: 1; }
+html[data-presentation-mode="browser"] .browser-nav { display: flex; }
+.browser-nav button { all: unset; cursor: pointer; padding: 6px 12px; border-radius: 999px; }
+.browser-nav button:hover { background: rgba(242,232,208,.15); }
+.browser-nav output { min-width: 60px; text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section data-slide id="titel" class="title-slide">
+  <div class="kicker">Testpräsentation für den HTML Presenter</div>
+  <h1>Die Entzifferung der Hieroglyphen</h1>
+  <p class="lead">Wie eine verstummte Schrift nach fast 1400 Jahren wieder zu sprechen begann</p>
+  <div class="name-row">
+    <div class="cartouche glyph" aria-label="Kartusche des Ptolemaios">𓊪𓏏𓍯𓃭𓐝𓇌𓋴</div>
+    <div class="cartouche-label">Ptolemaios –<br>so steht sein Name auf dem Stein</div>
+  </div>
+  <aside data-notes>
+    <p>Begrüßung. Frage ans Publikum: Wer hat den Stein von Rosette schon einmal im British Museum gesehen?</p>
+    <p>Ablauf in fünf Stationen: wie die Schrift verloren ging, falsche Fährten, der Stein, das Wettrennen, das Ergebnis.</p>
+    <p>Unten: der Name Ptolemaios in einer Kartusche – dazu kommen wir in Kapitel 3.</p>
+  </aside>
+</section>
+
+<!-- 2 -->
+<section data-slide id="verstummt">
+  <div class="kicker">Kapitel 1 · Verlust</div>
+  <h2>Eine Schrift verstummt</h2>
+  <ol class="timeline">
+    <li style="--i:0"><span class="year">≈ 3200</span><span class="what">v. Chr.: die ersten Hieroglyphen in Ägypten</span></li>
+    <li style="--i:1" class="dark"><span class="year">394</span><span class="what">n. Chr.: letzte datierte Inschrift, im Tempel von Philae</span></li>
+    <li style="--i:2"><span class="year">1799</span><span class="what">Fund des Steins von Rosette</span></li>
+    <li style="--i:3"><span class="year">1822</span><span class="what">Champollion liest die Schrift wieder</span></li>
+  </ol>
+  <p class="silence">Dazwischen: mehr als 1400 Jahre, in denen niemand die Zeichen lesen konnte – sie galten als geheime Bildersprache der Priester.</p>
+  <aside data-notes>
+    <p>Die Zeitleiste baut sich beim Betreten der Folie auf (Ereignis <code>presentation:enter</code>).</p>
+    <ul>
+      <li>394 n. Chr.: Graffito des Esmet-Achom in Philae, datiert auf den 24. August.</li>
+      <li>Danach schließen die letzten Tempel, das Wissen stirbt mit den Priestern.</li>
+      <li>Betonen: Die Sprache lebte im Koptischen weiter – nur die Schrift ging verloren.</li>
+    </ul>
+  </aside>
+</section>
+
+  <!-- 2.1 -->
+  <section data-slide data-level="2" id="horapollon">
+    <div class="kicker">Falsche Fährte 1</div>
+    <h2>Horapollon: Zeichen als Rätselbilder</h2>
+    <div class="split">
+      <ul class="facts">
+        <li>Um <b>500 n. Chr.</b> erklärt der Grieche Horapollon in seiner »Hieroglyphica« rund 190 Zeichen.</li>
+        <li>Er deutet sie als <em>Symbole</em> – nicht als Laute.</li>
+        <li>1419 wird die Handschrift auf der Insel Andros wiederentdeckt und prägt das Bild der Hieroglyphen für <b>300 Jahre</b>.</li>
+      </ul>
+      <div class="sign-card">
+        <span class="glyph" aria-label="Geier">𓅐</span>
+        <div class="reading">
+          <div><b>Horapollon</b>Der Geier bedeutet »Mutter«, weil es angeblich nur weibliche Geier gibt.</div>
+          <div class="right"><b>Tatsächlich</b>Das Zeichen hat den Lautwert <i>mwt</i> – und das ägyptische Wort für Mutter lautet <i>mwt</i>.</div>
+        </div>
+      </div>
+    </div>
+    <aside data-notes>
+      <p>Schönes Beispiel: Die Bedeutung stimmt zufällig, die Begründung ist Naturkunde-Fantasie.</p>
+      <p>Genau dieses Missverständnis – Hieroglyphen als reine Ideen-Bilder – hat die Entzifferung jahrhundertelang blockiert.</p>
+    </aside>
+  </section>
+
+  <!-- 2.2 -->
+  <section data-slide data-level="2" id="kircher">
+    <div class="kicker">Falsche Fährte 2</div>
+    <h2>Athanasius Kircher: gelehrt und gründlich falsch</h2>
+    <div class="split">
+      <ul class="facts">
+        <li>Jesuit und Universalgelehrter in Rom, Werk »Oedipus Aegyptiacus« (<b>1652–1654</b>).</li>
+        <li>Er »übersetzt« Inschriften als mystische Lehrsätze.</li>
+        <li>Aber: Er erkennt, dass das <em>Koptische</em> die späte Form des Ägyptischen ist – der Schlüssel, den Champollion später nutzt.</li>
+      </ul>
+      <div class="versus">
+        <div class="wrong"><b>Kircher liest (sinngemäß)</b>Der Schutz des Osiris gegen die Gewalt des Typhon ist durch die richtigen Riten und Opfer zu erbitten …</div>
+        <div class="true"><b>Tatsächlich steht da</b>Ein Königsname: Wahibre, bei den Griechen Apries.</div>
+      </div>
+    </div>
+    <aside data-notes>
+      <p>Kircher ist kein Scharlatan – er sammelt enorm viel Material. Aber seine Grundannahme ist falsch.</p>
+      <p>Pointe: Ausgerechnet sein Beitrag zum Koptischen wird später entscheidend.</p>
+    </aside>
+  </section>
+
+<!-- 3 -->
+<section data-slide id="rosette" class="chapter" data-title="Der Stein von Rosette">
+  <div class="kicker">Kapitel 2 · Der Schlüssel</div>
+  <h2>Der Stein<br>von Rosette</h2>
+  <p>Ein Priesterdekret aus dem Jahr 196 v. Chr. – in drei Schriften auf einer Platte.</p>
+  <div class="big-glyph glyph" aria-hidden="true">𓉐</div>
+  <aside data-notes>
+    <p>Kapitelwechsel. Kurz Spannung aufbauen: Jetzt kommt zum ersten Mal ein Text, den man vergleichen kann.</p>
+  </aside>
+</section>
+
+  <!-- 3.1 -->
+  <section data-slide data-level="2" id="fund">
+    <div class="kicker">Rosette · Der Fund</div>
+    <h2>Ein Fund beim Festungsbau</h2>
+    <div class="split">
+      <ul class="facts">
+        <li><b>Juli 1799:</b> Französische Soldaten unter Napoleon bauen bei Rosette (Raschid) im Nildelta eine Festung aus und stoßen auf eine beschriftete Steinplatte.</li>
+        <li>Offizier <b>Pierre-François Bouchard</b> erkennt ihren Wert.</li>
+        <li><b>1801:</b> Frankreich kapituliert in Ägypten, der Stein geht an Großbritannien.</li>
+        <li><b>1802:</b> Ankunft im British Museum – dort steht er bis heute.</li>
+      </ul>
+      <div class="stats">
+        <div class="stat"><strong>≈ 760 kg</strong><span>Granodiorit</span></div>
+        <div class="stat"><strong>112 × 76 cm</strong><span>Höhe × Breite, oberer Teil abgebrochen</span></div>
+        <div class="stat"><strong>196 v. Chr.</strong><span>Dekret der Priester von Memphis für Ptolemaios V.</span></div>
+      </div>
+    </div>
+    <aside data-notes>
+      <p>Die Franzosen dürfen Abgüsse und Abschriften behalten – deshalb können auch französische Gelehrte wie Champollion daran arbeiten.</p>
+    </aside>
+  </section>
+
+  <!-- 3.2 -->
+  <section data-slide data-level="2" id="drei-schriften">
+    <div class="kicker">Rosette · Der Text</div>
+    <h2>Ein Text, drei Schriften</h2>
+    <div class="stone-layout">
+      <div class="stone" id="stone">
+        <button class="band hiero" data-script="hiero" aria-label="Hieroglyphen">𓇳𓄟𓋴𓋴𓊪𓏏𓍯𓃭𓐝𓇌𓋴𓀀𓁐𓂀𓃀𓄿𓅓𓆑𓇋𓈖𓉔𓊃𓋹𓌳𓍿𓎛𓏏𓐍𓀭𓁷𓂋𓃭𓄤𓅱𓆓𓇯𓈎𓉐𓊖𓋴𓌂𓍑𓎡𓏲𓀀𓁹𓂝𓃹𓄂𓅨𓆣𓇓𓈗𓉻𓊹𓋞𓌙𓍯𓎟</button>
+        <button class="band demotic" data-script="demotic" aria-label="Demotisch"></button>
+        <button class="band greek" data-script="greek" aria-label="Griechisch">ΒΑΣΙΛΕΥΟΝΤΟΣ ΤΟΥ ΝΕΟΥ ΚΑΙ ΠΑΡΑΛΑΒΟΝΤΟΣ ΤΗΝ ΒΑΣΙΛΕΙΑΝ ΠΑΡΑ ΤΟΥ ΠΑΤΡΟΣ ΚΥΡΙΟΥ ΒΑΣΙΛΕΙΩΝ ΜΕΓΑΛΟΔΟΞΟΥ ΤΟΥ ΤΗΝ ΑΙΓΥΠΤΟΝ ΚΑΤΑΣΤΗΣΑΜΕΝΟΥ ΚΑΙ ΤΑ ΠΡΟΣ ΤΟΥΣ ΘΕΟΥΣ ΕΥΣΕΒΟΥΣ ΑΝΤΙΠΑΛΩΝ ΥΠΕΡΤΕΡΟΥ ΤΟΥ ΤΟΝ ΒΙΟΝ ΤΩΝ ΑΝΘΡΩΠΩΝ ΕΠΑΝΟΡΘΩΣΑΝΤΟΣ ΚΥΡΙΟΥ ΤΡΙΑΚΟΝΤΑΕΤΗΡΙΔΩΝ ΚΑΘΑΠΕΡ Ο ΗΦΑΙΣΤΟΣ Ο ΜΕΓΑΣ ΒΑΣΙΛΕΩΣ ΚΑΘΑΠΕΡ Ο ΗΛΙΟΣ ΜΕΓΑΣ ΒΑΣΙΛΕΥΣ ΤΩΝ ΤΕ ΑΝΩ ΚΑΙ ΤΩΝ ΚΑΤΩ ΧΩΡΩΝ ΕΚΓΟΝΟΥ ΘΕΩΝ ΦΙΛΟΠΑΤΟΡΩΝ ΟΝ Ο ΗΦΑΙΣΤΟΣ ΕΔΟΚΙΜΑΣΕΝ Ω Ο ΗΛΙΟΣ ΕΔΩΚΕΝ ΤΗΝ ΝΙΚΗΝ ΕΙΚΟΝΟΣ ΖΩΣΗΣ ΤΟΥ ΔΙΟΣ ΥΙΟΥ ΤΟΥ ΗΛΙΟΥ ΠΤΟΛΕΜΑΙΟΥ ΑΙΩΝΟΒΙΟΥ ΗΓΑΠΗΜΕΝΟΥ ΥΠΟ ΤΟΥ ΦΘΑ</button>
+      </div>
+      <div class="script-info">
+        <div class="script-tabs">
+          <button data-script="hiero">Hieroglyphen</button>
+          <button data-script="demotic">Demotisch</button>
+          <button data-script="greek">Griechisch</button>
+        </div>
+        <div id="script-detail"><p class="hint">Klicke auf eine der drei Schriften auf dem Stein.</p></div>
+      </div>
+    </div>
+    <aside data-notes>
+      <p><strong>Interaktiv:</strong> Auf die Bänder des Steins oder die Knöpfe klicken.</p>
+      <ul>
+        <li>Der griechische Teil endet mit der Anweisung, das Dekret in heiligen, einheimischen und griechischen Buchstaben aufzustellen.</li>
+        <li>Damit war klar: Alle drei Teile sagen dasselbe.</li>
+      </ul>
+    </aside>
+  </section>
+
+<!-- 4 -->
+<section data-slide id="wettrennen" class="chapter" data-title="Das Wettrennen">
+  <div class="kicker">Kapitel 3 · Das Wettrennen</div>
+  <h2>Young gegen<br>Champollion</h2>
+  <div class="rivals">
+    <div class="rival"><div class="initials">TY</div><div><b>Thomas Young</b><span>1773–1829 · London</span></div></div>
+    <div class="rival"><div class="initials">JC</div><div><b>Jean-François Champollion</b><span>1790–1832 · Figeac, Grenoble, Paris</span></div></div>
+  </div>
+  <div class="big-glyph glyph" aria-hidden="true">𓋹</div>
+  <aside data-notes>
+    <p>Zwei Männer, zwei Länder, ein Stein – und ein bis heute diskutierter Streit um die Ehre.</p>
+  </aside>
+</section>
+
+  <!-- 4.1 -->
+  <section data-slide data-level="2" id="young">
+    <div class="kicker">Wettrennen · England</div>
+    <h2>Thomas Young: die Spur der Kartuschen</h2>
+    <div class="split">
+      <ul class="facts">
+        <li>Arzt, Physiker (Wellentheorie des Lichts) und Universalgelehrter.</li>
+        <li>Ab <b>1814</b>: Die ovalen Ringe – <em>Kartuschen</em> – umschließen Königsnamen.</li>
+        <li>In der Kartusche des Ptolemaios ordnet er Zeichen Laute zu, viele davon richtig.</li>
+        <li><b>1819</b>: Artikel »Egypt« in der Encyclopaedia Britannica.</li>
+        <li>Aber: Lautzeichen hält er für eine Ausnahme, nur für fremde Namen.</li>
+      </ul>
+      <div class="young-visual">
+        <div class="cartouche annotated">
+          <figure><span class="glyph">𓊪</span><figcaption>p</figcaption></figure>
+          <figure><span class="glyph">𓏏</span><figcaption>t</figcaption></figure>
+          <figure><span class="glyph">𓍯</span><figcaption>o</figcaption></figure>
+          <figure><span class="glyph">𓃭</span><figcaption>l</figcaption></figure>
+          <figure><span class="glyph">𓐝</span><figcaption>m</figcaption></figure>
+          <figure class="unsure"><span class="glyph">𓇌</span><figcaption>i</figcaption></figure>
+          <figure><span class="glyph">𓋴</span><figcaption>s</figcaption></figure>
+        </div>
+        <p>Ptolemaios – der Name, den das Griechische auf dem Stein verrät</p>
+      </div>
+    </div>
+    <aside data-notes>
+      <p>Young geht fast wie ein Codeknacker vor: Er zählt, wie oft Namen im griechischen Text vorkommen, und sucht gleich häufige Gruppen.</p>
+      <p>Die Lautwerte hier zeigen den heutigen Stand, Young lag bei einigen noch daneben.</p>
+    </aside>
+  </section>
+
+  <!-- 4.2 -->
+  <section data-slide data-level="2" id="champollion">
+    <div class="kicker">Wettrennen · Frankreich</div>
+    <h2>Champollion: der Durchbruch</h2>
+    <div class="quote">»Je tiens l'affaire!«</div>
+    <ul class="facts">
+      <li>Lernt schon als Jugendlicher <b>Koptisch</b> – die späte Form des Ägyptischen.</li>
+      <li><b>14. September 1822:</b> In Abschriften aus Abu Simbel liest er den Namen <em>Ramses</em> – einen ägyptischen, keinen griechischen Namen.</li>
+      <li>Er stürmt ins Büro seines Bruders, ruft »Ich hab's!« und bricht der Überlieferung nach ohnmächtig zusammen.</li>
+    </ul>
+    <aside data-notes>
+      <p>Die entscheidende Einsicht: Die Schrift mischt Lautzeichen und Bedeutungszeichen – und zwar durchgehend, nicht nur bei Fremdnamen.</p>
+      <p>Nächste Folie (4.2.1) zeigt die Ramses-Kartusche Zeichen für Zeichen.</p>
+    </aside>
+  </section>
+
+    <!-- 4.2.1 -->
+    <section data-slide data-level="3" id="ramses">
+      <div class="kicker">Durchbruch · Im Detail</div>
+      <h2>Die Kartusche des Ramses</h2>
+      <div class="ramses">
+        <div class="cartouche">
+          <button class="sign" data-sign="0"><span class="glyph">𓇳</span><span class="sound">?</span></button>
+          <button class="sign" data-sign="1"><span class="glyph">𓄟</span><span class="sound">?</span></button>
+          <button class="sign" data-sign="2"><span class="glyph">𓋴</span><span class="sound">?</span></button>
+          <button class="sign" data-sign="3"><span class="glyph">𓋴</span><span class="sound">?</span></button>
+        </div>
+        <div class="explain" id="ramses-explain"><p class="hint">Klicke die Zeichen nacheinander an – so wie Champollion sie gelesen hat.</p></div>
+        <div class="reading-result" id="ramses-result">Ra – mes – s – s: »Ramses«, Re hat ihn geboren</div>
+      </div>
+      <aside data-notes>
+        <p><strong>Interaktiv:</strong> Zeichen von links nach rechts anklicken.</p>
+        <ul>
+          <li>Sonne: koptisch »rē« – also Re, der Sonnengott.</li>
+          <li>Drei Fuchsfelle: kennt er aus dem Namen Thutmosis, koptisch »mise« = gebären.</li>
+          <li>Gefalteter Stoff: aus Ptolemaios bekannt, Lautwert s.</li>
+        </ul>
+      </aside>
+    </section>
+
+<!-- 5 -->
+<section data-slide id="ergebnis">
+  <div class="kicker">Kapitel 4 · Ergebnis</div>
+  <h2>Was daraus wurde</h2>
+  <div class="results">
+    <ol class="chronik">
+      <li><b>1822</b><span>27. September: »Lettre à M. Dacier« an die Pariser Akademie</span></li>
+      <li><b>1824</b><span>»Précis du système hiéroglyphique« – das ganze System</span></li>
+      <li><b>1832</b><span>Champollion stirbt mit 41 Jahren in Paris</span></li>
+      <li><b>1866</b><span>Lepsius findet in Tanis das Dekret von Kanopus – ein zweiter mehrsprachiger Text bestätigt die Methode</span></li>
+    </ol>
+    <div class="keys">
+      <div class="key"><span class="num">1</span><div><b>Ein Text, mehrere Schriften</b>Vergleichen statt raten</div></div>
+      <div class="key"><span class="num">2</span><div><b>Namen als Brücke</b>Königsnamen klingen in jeder Sprache ähnlich</div></div>
+      <div class="key"><span class="num">3</span><div><b>Koptisch als lebendes Erbe</b>Die Sprache war nie ganz tot</div></div>
+    </div>
+  </div>
+  <aside data-notes>
+    <p>Zusammenfassen mit den drei Zutaten rechts.</p>
+    <p>Abschluss: Ohne Napoleons Feldzug, einen Zufallsfund und einen Sprachbegabten aus Figeac könnten wir die Inschriften vielleicht bis heute nicht lesen.</p>
+    <p>Danach: Fragen.</p>
+  </aside>
+</section>
+
+<nav class="browser-nav" aria-label="Navigation">
+  <button onclick="presentation.prevSection()" title="Voriges Kapitel (⇧←)">⇤</button>
+  <button onclick="presentation.prev()" title="Zurück (←)">←</button>
+  <output id="nav-number"></output>
+  <button onclick="presentation.next()" title="Weiter (→)">→</button>
+  <button onclick="presentation.nextSection()" title="Nächstes Kapitel (⇧→)">⇥</button>
+</nav>
+
+<script>
+// Seitenzahl in der Browser-Bedienleiste
+document.addEventListener('presentation:change', e => {
+  document.getElementById('nav-number').textContent = `${e.detail.slide.number} · ${e.detail.index + 1}/${presentation.slides.length}`;
+});
+
+// 2: Zeitleiste bei jedem Betreten neu abspielen
+const verstummt = document.getElementById('verstummt');
+verstummt.addEventListener('presentation:enter', () => {
+  verstummt.classList.remove('play');
+  void verstummt.offsetWidth;
+  verstummt.classList.add('play');
+});
+
+// 3.2: Schriften auf dem Stein
+const SCRIPTS = {
+  hiero: ['Hieroglyphen', 'Die heilige Schrift der Tempel und Denkmäler. Vom oberen Teil ist viel abgebrochen.', 14],
+  demotic: ['Demotisch', 'Die Alltagsschrift von Verwaltung und Handel – eine stark verkürzte Schreibschrift.', 32],
+  greek: ['Griechisch', 'Die Sprache der ptolemäischen Herrscher. 1799 konnte sie jeder Gelehrte lesen – der Einstieg in die anderen beiden.', 54]
+};
+const stone = document.getElementById('stone');
+const detail = document.getElementById('script-detail');
+const slide32 = document.getElementById('drei-schriften');
+slide32.addEventListener('click', e => {
+  const key = e.target.closest('[data-script]')?.dataset.script;
+  if (!key) return;
+  const [name, text, lines] = SCRIPTS[key];
+  stone.classList.add('has-choice');
+  slide32.querySelectorAll('[data-script]').forEach(el => el.classList.toggle('chosen', el.dataset.script === key));
+  detail.innerHTML = `<h3>${name}</h3><p>${text}</p><span class="lines">${lines}<small>Zeilen erhalten</small></span>`;
+});
+
+// 4.2.1: Ramses Zeichen für Zeichen
+const SIGNS = [
+  ['RA', 'Sonnenscheibe', 'Koptisch heißt die Sonne »rē« – das Zeichen steht für den Sonnengott Re.'],
+  ['MS', 'Drei Fuchsfelle', 'Kennt Champollion aus dem Namen Thutmosis. Koptisch »mise« bedeutet gebären.'],
+  ['S', 'Gefalteter Stoff', 'Aus der Kartusche des Ptolemaios bekannt: der Laut s.'],
+  ['S', 'Noch einmal Stoff', 'Ein zweites s – und der Name ist vollständig.']
+];
+const ramses = document.getElementById('ramses');
+const explain = document.getElementById('ramses-explain');
+const result = document.getElementById('ramses-result');
+ramses.addEventListener('click', e => {
+  const sign = e.target.closest('.sign');
+  if (!sign) return;
+  const [sound, name, text] = SIGNS[sign.dataset.sign];
+  ramses.querySelectorAll('.sign').forEach(s => s.classList.toggle('active', s === sign));
+  sign.classList.add('revealed');
+  sign.querySelector('.sound').textContent = sound;
+  explain.innerHTML = `<h3>${name}</h3><p>${text}</p>`;
+  result.classList.toggle('shown', ramses.querySelectorAll('.sign.revealed').length === SIGNS.length);
+});
+</script>
+</body>
+</html>
