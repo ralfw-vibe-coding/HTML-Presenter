@@ -42,6 +42,13 @@ struct DeadlineWarning: Equatable {
     }
 }
 
+/// Anordnung der Übersicht: je Rückgrat-Folie eine Zeile, oder alle Folien fortlaufend umbrechend.
+enum OverviewLayout: String, CaseIterable, Identifiable {
+    case rows, matrix
+
+    var id: String { rawValue }
+}
+
 enum ConsoleMode: Int, CaseIterable, Identifiable {
     case speaker, overview, mirror
 

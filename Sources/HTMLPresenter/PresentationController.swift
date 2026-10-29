@@ -27,6 +27,7 @@ final class PresentationController {
     var beamerDescription = ""
     var hideBarInMirror = false
     var overviewCardWidth: CGFloat = 220
+    var overviewLayout: OverviewLayout = .rows
     var isEditingDeadline = false
     var deadline: Date? {
         didSet { prepareWarnings() }

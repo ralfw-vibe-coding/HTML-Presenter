@@ -122,6 +122,17 @@ private struct TopBar: View {
             }
 
             if controller.mode == .overview {
+                Picker("Anordnung", selection: $controller.overviewLayout) {
+                    Image(systemName: "rectangle.grid.1x2").tag(OverviewLayout.rows)
+                        .help("Zeilen: je Kapitel eine Zeile")
+                    Image(systemName: "square.grid.3x3").tag(OverviewLayout.matrix)
+                        .help("Matrix: alle Folien nacheinander")
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
+                .help("Übersicht als Zeilen (je Kapitel) oder als Matrix (alle Folien nacheinander)")
+
                 HStack(spacing: 2) {
                     Button { controller.zoomOverview(by: 1 / 1.25) } label: { Image(systemName: "minus") }
                         .help("Miniaturen kleiner (auch per Trackpad zusammenziehen)")
@@ -418,24 +429,10 @@ private struct OverviewView: View {
             VStack(spacing: 0) {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 26) {
-                            ForEach(controller.sections, id: \.first!.index) { section in
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(alignment: .top, spacing: 14) {
-                                        ForEach(section) { slide in
-                                            card(for: slide)
-                                            if slide.level == 1 && section.count > 1 {
-                                                Rectangle()
-                                                    .fill(Color.white.opacity(0.15))
-                                                    .frame(width: 1, height: cardWidth * controller.stageSize.height / controller.stageSize.width)
-                                            }
-                                        }
-                                    }
-                                    .padding(8)
-                                }
-                            }
+                        switch controller.overviewLayout {
+                        case .rows: rows
+                        case .matrix: matrix
                         }
-                        .padding(20)
                     }
                     .simultaneousGesture(pinch)
                     .onAppear { proxy.scrollTo(controller.current, anchor: .center) }
@@ -448,6 +445,7 @@ private struct OverviewView: View {
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 8)
             }
+            .frame(maxWidth: .infinity)
 
             Rectangle().fill(Color.white.opacity(0.08)).frame(width: 1)
 
@@ -456,9 +454,46 @@ private struct OverviewView: View {
         }
     }
 
+    /// Je Rückgrat-Folie eine Zeile mit ihren Unterfolien.
+    private var rows: some View {
+        VStack(alignment: .leading, spacing: 26) {
+            ForEach(controller.sections, id: \.first!.index) { section in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: 14) {
+                        ForEach(section) { slide in
+                            card(for: slide)
+                            if slide.level == 1 && section.count > 1 {
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.15))
+                                    .frame(width: 1, height: cardWidth * controller.stageSize.height / controller.stageSize.width)
+                            }
+                        }
+                    }
+                    .padding(8)
+                }
+            }
+        }
+        .padding(20)
+    }
+
+    /// Alle Folien in Dokumentreihenfolge (Tiefe zuerst), umbrechend wie Text.
+    private var matrix: some View {
+        FlowLayout(spacing: 16, lineSpacing: 24) {
+            ForEach(controller.slides) { card(for: $0) }
+        }
+        .padding(28)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
+    /// Jede Ebene unter dem Rückgrat ist 15 % kleiner als die darüber.
+    private func width(for slide: Slide) -> CGFloat {
+        cardWidth * pow(0.85, CGFloat(slide.level - 1))
+    }
+
     private func card(for slide: Slide) -> some View {
         let isCurrent = slide.index == controller.current
         let isSelected = slide.index == controller.selection
+        let cardWidth = width(for: slide)
         return VStack(alignment: .leading, spacing: 6) {
             Thumbnail(image: controller.thumbnails[slide.index], aspect: controller.stageSize)
                 .frame(width: cardWidth)
@@ -630,6 +665,43 @@ private struct EmptyState: View {
             .padding(.top, 8)
             .help("Legt SCHEMA.md in die Zwischenablage – zum Einfügen in einen Chat mit einer KI")
         }
+    }
+}
+
+/// Ordnet Elemente nebeneinander an und bricht um, wenn die Zeile voll ist – wie Wörter in einem Absatz.
+/// Die Elemente einer Zeile stehen oben bündig.
+private struct FlowLayout: Layout {
+    var spacing: CGFloat
+    var lineSpacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        arrange(subviews, width: proposal.width ?? .infinity).size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let frames = arrange(subviews, width: bounds.width).frames
+        for (subview, frame) in zip(subviews, frames) {
+            subview.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
+                          proposal: ProposedViewSize(frame.size))
+        }
+    }
+
+    private func arrange(_ subviews: Subviews, width: CGFloat) -> (frames: [CGRect], size: CGSize) {
+        var frames: [CGRect] = []
+        var x: CGFloat = 0, y: CGFloat = 0, lineHeight: CGFloat = 0, widest: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x > 0 && x + size.width > width {
+                x = 0
+                y += lineHeight + lineSpacing
+                lineHeight = 0
+            }
+            frames.append(CGRect(origin: CGPoint(x: x, y: y), size: size))
+            x += size.width + spacing
+            lineHeight = max(lineHeight, size.height)
+            widest = max(widest, x - spacing)
+        }
+        return (frames, CGSize(width: widest, height: y + lineHeight))
     }
 }
 
